@@ -17,7 +17,7 @@
 // without overstepping.
 //
 // Deterministic: the same bytes on every run. No network, no input.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const TEXT = "😇";
 
@@ -29,3 +29,16 @@ if (LENGTH < 1 || LENGTH > 8) {
 
 mkdirSync("/output", { recursive: true });
 writeFileSync("/output/entry.txt", TEXT, "utf8");
+
+// Gate self-check: read the file back and report its gate numbers, so a
+// run that writes anything but exactly one emoji fails loudly instead of
+// silently entering a wrong artifact.
+const BACK = readFileSync("/output/entry.txt", "utf8");
+if (BACK !== TEXT) {
+  throw new Error("entry.txt round-trip mismatch");
+}
+console.log(
+  `OK /output/entry.txt ${[...BACK].length} char ` +
+    `(U+${[...BACK][0].codePointAt(0)!.toString(16).toUpperCase()}), ` +
+    `${Buffer.byteLength(BACK, "utf8")} bytes`,
+);
